@@ -1,3 +1,4 @@
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Principale {
@@ -13,18 +14,24 @@ public class Principale {
 
             switch (scelta) {
                 case 1:
-                    System.out.println("Inserire il titolo del libro: ");
-                    String titolo = input.nextLine();
-                    System.out.println("Inserire l'autore del libro: ");
-                    String autore = input.nextLine();
-                    System.out.println("Inserire l'anno di pubblicazione del libro: ");
-                    int annoPubblicazione = input.nextInt();
-                    System.out.println("Inserire il numero di copie disponibili del libro: ");
-                    int numeroCopie = input.nextInt();
+                    try {
 
-                    Libro libro = new Libro(titolo, autore, annoPubblicazione, numeroCopie);
-                    biblioteca.inserimentoLibro(libro);
-                    System.out.println("Libro inserito con successo!");
+                        System.out.println("Inserire il titolo del libro: ");
+                        String titolo = input.nextLine();
+                        System.out.println("Inserire l'autore del libro: ");
+                        String autore = input.nextLine();
+                        System.out.println("Inserire l'anno di pubblicazione del libro: ");
+                        int annoPubblicazione = input.nextInt();
+                        System.out.println("Inserire il numero di copie disponibili del libro: ");
+                        int numeroCopie = input.nextInt();
+
+                        Libro libro = new Libro(titolo, autore, annoPubblicazione, numeroCopie);
+                        biblioteca.inserimentoLibro(libro);
+                        System.out.println("Libro inserito con successo!");
+                    } catch (InputMismatchException e) {
+                        System.out.println("Errore");
+                        input.nextLine();
+                    }
                     break;
 
                 case 2:
