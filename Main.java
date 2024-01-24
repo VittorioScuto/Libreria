@@ -2,55 +2,141 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
-        Scanner input = new Scanner(System.in);
-        boolean logout = false;
 
-        while(!logout) {
-            System.out.println("\nMENU \n1) Add book \n2) Viewing books \n3) Borrow a book \n4) Logout \nChoose the operation to perform ");
-            int choice = input.nextInt();
-            input.nextLine();
+    public static class Handler {
 
-            switch (choice) {
-                case 1:
+        private interface MenuHandler {
+            void handleRequest(int choice, Library library, Scanner input);
+            void setNextHandler(MenuHandler nextHandler);
+            MenuHandler getNextHandler();
+        }
+
+        private static class AddBookHandler implements MenuHandler {
+            private MenuHandler nextHandler;
+
+            @Override
+            public void handleRequest(int choice, Library library, Scanner input) {
+                if (choice == 1) {
                     try {
-
-                        System.out.println("Enter the title of the book: ");
+                        System.out.print("Enter the title of the book: ");
                         String title = input.nextLine();
-                        System.out.println("Enter the author of the book: ");
+                        System.out.print("Enter the author of the book: ");
                         String author = input.nextLine();
-                        System.out.println("Enter the year the book was published: ");
-                        int yearofpublication = input.nextInt();
-                        System.out.println("Enter the number of available copies of the book: ");
-                        int numberofcopies = input.nextInt();
+                        System.out.print("Enter the publication year of the book: ");
+                        int publicationYear = input.nextInt();
+                        System.out.print("Enter the number of copies available: ");
+                        int numberOfCopies = input.nextInt();
 
-                        Book book = new Book(title, author, yearofpublication, numberofcopies);
-                        Library.getInstance().addbook(book);
+                        Book book = new Book(title, author, publicationYear, numberOfCopies);
+                        library.addbook(book);
                         System.out.println("Book inserted successfully!");
-                    } catch (InputMismatchException e) {
-                        System.out.println("Error");
+                    } catch (InputMismatchException | NumberFormatException e) {
+                        System.out.println("ERROR: Please enter the correct data type.");
                         input.nextLine();
                     }
-                    break;
+                } else if (nextHandler != null) {
+                    nextHandler.handleRequest(choice, library, input);
+                }
+            }
 
-                case 2:
+            @Override
+            public void setNextHandler(MenuHandler nextHandler) {
+                this.nextHandler = nextHandler;
+            }
+
+            @Override
+            public MenuHandler getNextHandler() {
+                return nextHandler;
+            }
+        }
+
+        private static class ViewBookHandler implements MenuHandler {
+            private MenuHandler nextHandler;
+
+            @Override
+            public void handleRequest(int choice, Library library, Scanner input) {
+                if (choice == 2) {
                     System.out.println("List of all books: ");
-                    Library.getInstance().bookdisplay();
-                    break;
+                    library.bookdisplay();
+                } else if (nextHandler != null) {
+                    nextHandler.handleRequest(choice, library, input);
+                }
+            }
 
-                case 3:
-                    System.out.println("Enter the title of the book to borrow: ");
-                    String loantitle = input.nextLine();
-                    Library.getInstance().bookloan(loantitle);
-                    break;
+            @Override
+            public void setNextHandler(MenuHandler nextHandler) {
+                this.nextHandler = nextHandler;
+            }
 
-                case 4:
+            @Override
+            public MenuHandler getNextHandler() {
+                return nextHandler;
+            }
+        }
+
+        private static class BorrowBookHandler implements MenuHandler {
+            private MenuHandler nextHandler;
+
+            @Override
+            public void handleRequest(int choice, Library library, Scanner input) {
+                if (choice == 3) {
+                    System.out.print("Enter the title of the book to borrow: ");
+                    String titleToBorrow = input.nextLine();
+                    library.bookloan(titleToBorrow);
+                } else if (nextHandler != null) {
+                    nextHandler.handleRequest(choice, library, input);
+                }
+            }
+
+            @Override
+            public void setNextHandler(MenuHandler nextHandler) {
+                this.nextHandler = nextHandler;
+            }
+
+            @Override
+            public MenuHandler getNextHandler() {
+                return nextHandler;
+            }
+        }
+
+        private MenuHandler chain;
+
+        public Handler() {
+            chain = new AddBookHandler();
+            chain.setNextHandler(new ViewBookHandler());
+            chain.getNextHandler().setNextHandler(new BorrowBookHandler());
+        }
+
+        public void processRequest(int choice, Library library, Scanner input) {
+            chain.handleRequest(choice, library, input);
+        }
+    }
+
+    public static void main(String[] args) {
+        Handler handler = new Handler();
+
+        Scanner input = new Scanner(System.in);
+
+        Library library = Library.getInstance();
+
+        boolean logout = false;
+
+        while (!logout) {
+            System.out.print("\nMENU \n1) Insert a book \n2) Display books \n3) Borrow a book \n4) Logout \nChoose an operation to perform: ");
+
+            if (input.hasNextInt()) {
+                int choice = input.nextInt();
+                input.nextLine();
+
+                if (choice == 4) {
                     logout = true;
-                    System.out.println("Logged out");
-                    break;
-
-                default:
-                    System.out.println("Invalid choice. Try again.");
+                    System.out.println("Logout successful");
+                } else {
+                    handler.processRequest(choice, library, input);
+                }
+            } else {
+                System.out.println("ERROR: Invalid choice. Please try again.");
+                input.nextLine();
             }
         }
 
